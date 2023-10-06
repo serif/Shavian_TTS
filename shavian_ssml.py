@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
-
+# shavian_ssml.py for Python 3.6 (2016) or newer
+# Converts Shavian text to SSML with IPA for use with Text-To-Speech engines
 import sys
 
 
+# Global variables here at the top to keep them easy to see and change.
+# The xml/ssml below is for Microsoft TTS since that is freely accessible
+# by web browser and requires no other software be installed.
 ssml_open = '<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US">\n  <voice name="en-US-JennyNeural">\n'
 phoneme = '<phoneme alphabet="ipa" ph="THEIPA">THESHA</phoneme>'
 ssml_close = '\n  </voice>\n</speak>\n'
@@ -30,6 +34,7 @@ ipa_traditional = {
     '𐑻': 'ɜːr', '𐑼': 'ər', '𐑽': 'ɪər',
     '𐑾': 'ɪə', '𐑿': 'juː'
 }
+# Select your preferred IPA set here
 shavipa = ipa_traditional
 
 
@@ -59,6 +64,7 @@ class Translator:
         self.in_file = ''
         self.out_file = ''
 
+    # Read Shavian text from file supplied as command parameter
     def read_text(self, in_file):
         self.in_file = in_file
         self.out_file = "out_" + in_file
@@ -69,6 +75,7 @@ class Translator:
             print(f"File '{self.in_file}' not found.")
             sys.exit(1)
 
+    # Wrap word in phoneme tag
     def wrap(self, word):
         global shavipa
         global phoneme
@@ -76,10 +83,14 @@ class Translator:
         sha = ''.join(word)
         ipa = ''.join([shavipa[c] for c in sha])
 
+        # Expand abbreviations
+        # Must be done here at the word-level
         abbreviations = {
             'ð': 'ðə',
             'v': 'ʌv',
-            'n': 'ænd',
+            # æsh ends up sounding over-emphasized
+            # 'n': 'ænd',
+            'n': 'ənd',
             't': 'tu',
             'f': 'fɔr'
         }
@@ -88,9 +99,11 @@ class Translator:
                 ipa = v
                 break
 
+        # Insert into phoneme tag
         out = phoneme.replace('THEIPA', ipa).replace('THESHA', sha)
         return out
 
+    # Takes Shavian text, returns SSML
     def make_ssml(self, text):
         global ssml_open
         global ssml_close
@@ -98,6 +111,9 @@ class Translator:
         out = [ssml_open]
         word = []
 
+        # Read char-by-char
+        # Add to word buffer if Shavian
+        # Wrap buffer then pass through when not Shavian
         for char in text:
             if char in shavipa:
                 word.append(char)
@@ -107,12 +123,14 @@ class Translator:
                     word.clear()
                 out.append(char)
 
+        # Ensure final buffer is processed
         if word:
             out.append(self.wrap(word))
         out.append(ssml_close)
 
         return ''.join(out).strip()
 
+    # Write SSML to file (if initially read from file)
     def write_output(self, out):
         if not self.out_file:
             return ''
@@ -123,4 +141,3 @@ class Translator:
 
 if __name__ == "__main__":
     main()
-

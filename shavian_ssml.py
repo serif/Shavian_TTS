@@ -2,7 +2,6 @@
 # shavian_ssml.py for Python 3.6 (2016) or newer
 # Converts Shavian text to SSML with IPA for use with Text-To-Speech engines
 import sys
-from typing import Dict
 
 
 # Global variables here at the top to keep them easy to see and change.
@@ -11,7 +10,7 @@ from typing import Dict
 ssml_open: str = '<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US">\n  <voice name="en-US-JennyNeural">\n'
 phoneme: str = '<phoneme alphabet="ipa" ph="THEIPA">THESHA</phoneme>'
 ssml_close: str = '\n  </voice>\n</speak>\n'
-ipa_modern: Dict[str, str] = {
+ipa_modern: dict[str, str] = {
     '𐑐': 'p', '𐑚': 'b', '𐑑': 't', '𐑛': 'd', '𐑒': 'k', '𐑜': 'g',
     '𐑓': 'f', '𐑝': 'v', '𐑔': 'θ', '𐑞': 'ð', '𐑕': 's', '𐑟': 'z',
     '𐑖': 'ʃ', '𐑠': 'ʒ', '𐑗': 'ʧ', '𐑡': 'ʤ', '𐑘': 'j', '𐑢': 'w',
@@ -23,7 +22,7 @@ ipa_modern: Dict[str, str] = {
     '𐑻': 'ə́ːr', '𐑼': 'ər', '𐑽': 'ɪ́ːr',
     '𐑾': 'ɪjə', '𐑿': 'jʉ́w'
 }
-ipa_traditional: Dict[str, str] = {
+ipa_traditional: dict[str, str] = {
     '𐑐': 'p', '𐑚': 'b', '𐑑': 't', '𐑛': 'd', '𐑒': 'k', '𐑜': 'g',
     '𐑓': 'f', '𐑝': 'v', '𐑔': 'θ', '𐑞': 'ð', '𐑕': 's', '𐑟': 'z',
     '𐑖': 'ʃ', '𐑠': 'ʒ', '𐑗': 'ʧ', '𐑡': 'ʤ', '𐑘': 'j', '𐑢': 'w',
@@ -36,7 +35,7 @@ ipa_traditional: Dict[str, str] = {
     '𐑾': 'ɪə', '𐑿': 'juː'
 }
 # Select your preferred IPA set here
-shavipa: Dict[str, str] = ipa_traditional
+shavipa: dict[str, str] = ipa_traditional
 
 
 def main() -> None:
@@ -142,3 +141,4 @@ class Translator:
 
 if __name__ == "__main__":
     main()
+

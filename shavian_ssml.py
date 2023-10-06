@@ -2,6 +2,7 @@
 # shavian_ssml.py for Python 3.6 (2016) or newer
 # Converts Shavian text to SSML with IPA for use with Text-To-Speech engines
 import sys
+import argparse
 
 
 # Global variables here at the top to keep them easy to see and change.
@@ -39,30 +40,54 @@ shavipa: dict[str, str] = ipa_traditional
 
 
 def main() -> None:
-    translator = Translator()
+    args: argparse.Namespace = get_arguments()
+    translator = Translator(args)
 
-    if len(sys.argv) != 2:
-        desc = 'Demo'
-        print('Usage: python shavian_ssml.py <in_file>')
-        print('Example: python shavian_ssml.py input.txt')
-        text = '𐑭𐑤 𐑣𐑿𐑥𐑩𐑯 𐑚𐑰𐑦𐑙𐑟 𐑸 𐑚𐑹𐑯 𐑓𐑮𐑰 𐑯 𐑰𐑒𐑢𐑩𐑤 𐑦𐑯 𐑛𐑦𐑜𐑯𐑩𐑑𐑰 𐑯 𐑮𐑲𐑑𐑕. 𐑞𐑱 𐑸 𐑧𐑯𐑛𐑬𐑛 𐑢𐑦𐑞 𐑮𐑰𐑟𐑩𐑯 𐑯 𐑒𐑭𐑯𐑖𐑩𐑯𐑕 𐑯 𐑖𐑫𐑛 𐑨𐑒𐑑 𐑑𐑹𐑛𐑟 𐑢𐑩𐑯 𐑩𐑯𐑳𐑞𐑼 𐑦𐑯 𐑩 𐑕𐑐𐑦𐑮𐑦𐑑 𐑝 𐑚𐑮𐑳𐑞𐑼𐑣𐑫𐑛.'
-    else:
+    # Read file if provided
+    if args.input_file:
         desc = 'Input'
-        in_file = sys.argv[1]
-        text = translator.read_text(in_file)
+        text = translator.read_text(args.input_file)
+    # Demo if no file
+    else:
+        desc = 'Demo'
+        text = '𐑭𐑤 𐑣𐑿𐑥𐑩𐑯 𐑚𐑰𐑦𐑙𐑟 𐑸 𐑚𐑹𐑯 𐑓𐑮𐑰 𐑯 𐑰𐑒𐑢𐑩𐑤 𐑦𐑯 𐑛𐑦𐑜𐑯𐑩𐑑𐑰 𐑯 𐑮𐑲𐑑𐑕. '
+        text += '𐑞𐑱 𐑸 𐑧𐑯𐑛𐑬𐑛 𐑢𐑦𐑞 𐑮𐑰𐑟𐑩𐑯 𐑯 𐑒𐑭𐑯𐑖𐑩𐑯𐑕 𐑯 𐑖𐑫𐑛 𐑨𐑒𐑑 𐑑𐑹𐑛𐑟 𐑢𐑩𐑯 '
+        text += '𐑩𐑯𐑳𐑞𐑼 𐑦𐑯 𐑩 𐑕𐑐𐑦𐑮𐑦𐑑 𐑝 𐑚𐑮𐑳𐑞𐑼𐑣𐑫𐑛.'
 
+    # Create SSML
     out = translator.make_ssml(text)
     print(f'\n{desc}:\n{text}')
     print(f'\nOutput:\n{out}')
     written = translator.write_output(out)
     print(written)
-    print('Test here:\nhttps://speech.microsoft.com/audiocontentcreation')
+    print('Test in SSML mode here:')
+    print('https://speech.microsoft.com/audiocontentcreation')
+
+
+def get_arguments() -> None:
+    parser = argparse.ArgumentParser(
+        description='Convert Shavian text to SSML with IPA for TTS engines')
+    # parser.add_argument('--ipa', choices=['modern', 'traditional'],
+        # default='traditional', help='Select IPA style')
+    parser.add_argument('-m', '--modern', action='store_true', 
+        help='Use modern IPA style (default is traditional)')
+    parser.add_argument('input_file', nargs='?',
+        help='Input file containing Shavian text')
+    return parser.parse_args()
 
 
 class Translator:
-    def __init__(self) -> None:
+    def __init__(self, args: argparse.Namespace) -> None:
         self.in_file: str = ''
         self.out_file: str = ''
+        self.shavipa: dict[str, str] = {}
+
+        if args.modern:
+            global ipa_modern
+            self.shavipa = ipa_modern
+        else:
+            global ipa_traditional
+            self.shavipa = ipa_traditional
 
     # Read Shavian text from file supplied as command parameter
     def read_text(self, in_file: str) -> str:
@@ -77,11 +102,9 @@ class Translator:
 
     # Wrap word in phoneme tag
     def wrap(self, word: str) -> str:
-        global shavipa
         global phoneme
-
         sha = ''.join(word)
-        ipa = ''.join([shavipa[c] for c in sha])
+        ipa = ''.join([self.shavipa[c] for c in sha])
 
         # Expand abbreviations
         # Must be done here at the word-level
@@ -115,7 +138,7 @@ class Translator:
         # Add to word buffer if Shavian
         # Wrap buffer then pass through when not Shavian
         for char in text:
-            if char in shavipa:
+            if char in self.shavipa:
                 word += char
             else:
                 if word:

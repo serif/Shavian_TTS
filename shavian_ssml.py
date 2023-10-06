@@ -2,15 +2,16 @@
 # shavian_ssml.py for Python 3.6 (2016) or newer
 # Converts Shavian text to SSML with IPA for use with Text-To-Speech engines
 import sys
+from typing import Dict
 
 
 # Global variables here at the top to keep them easy to see and change.
 # The xml/ssml below is for Microsoft TTS since that is freely accessible
 # by web browser and requires no other software be installed.
-ssml_open = '<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US">\n  <voice name="en-US-JennyNeural">\n'
-phoneme = '<phoneme alphabet="ipa" ph="THEIPA">THESHA</phoneme>'
-ssml_close = '\n  </voice>\n</speak>\n'
-ipa_modern = {
+ssml_open: str = '<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US">\n  <voice name="en-US-JennyNeural">\n'
+phoneme: str = '<phoneme alphabet="ipa" ph="THEIPA">THESHA</phoneme>'
+ssml_close: str = '\n  </voice>\n</speak>\n'
+ipa_modern: Dict[str, str] = {
     '𐑐': 'p', '𐑚': 'b', '𐑑': 't', '𐑛': 'd', '𐑒': 'k', '𐑜': 'g',
     '𐑓': 'f', '𐑝': 'v', '𐑔': 'θ', '𐑞': 'ð', '𐑕': 's', '𐑟': 'z',
     '𐑖': 'ʃ', '𐑠': 'ʒ', '𐑗': 'ʧ', '𐑡': 'ʤ', '𐑘': 'j', '𐑢': 'w',
@@ -22,7 +23,7 @@ ipa_modern = {
     '𐑻': 'ə́ːr', '𐑼': 'ər', '𐑽': 'ɪ́ːr',
     '𐑾': 'ɪjə', '𐑿': 'jʉ́w'
 }
-ipa_traditional = {
+ipa_traditional: Dict[str, str] = {
     '𐑐': 'p', '𐑚': 'b', '𐑑': 't', '𐑛': 'd', '𐑒': 'k', '𐑜': 'g',
     '𐑓': 'f', '𐑝': 'v', '𐑔': 'θ', '𐑞': 'ð', '𐑕': 's', '𐑟': 'z',
     '𐑖': 'ʃ', '𐑠': 'ʒ', '𐑗': 'ʧ', '𐑡': 'ʤ', '𐑘': 'j', '𐑢': 'w',
@@ -35,10 +36,10 @@ ipa_traditional = {
     '𐑾': 'ɪə', '𐑿': 'juː'
 }
 # Select your preferred IPA set here
-shavipa = ipa_traditional
+shavipa: Dict[str, str] = ipa_traditional
 
 
-def main():
+def main() -> None:
     translator = Translator()
 
     if len(sys.argv) != 2:
@@ -60,12 +61,12 @@ def main():
 
 
 class Translator:
-    def __init__(self):
-        self.in_file = ''
-        self.out_file = ''
+    def __init__(self) -> None:
+        self.in_file: str = ''
+        self.out_file: str = ''
 
     # Read Shavian text from file supplied as command parameter
-    def read_text(self, in_file):
+    def read_text(self, in_file: str) -> str:
         self.in_file = in_file
         self.out_file = "out_" + in_file
         try:
@@ -76,7 +77,7 @@ class Translator:
             sys.exit(1)
 
     # Wrap word in phoneme tag
-    def wrap(self, word):
+    def wrap(self, word: str) -> str:
         global shavipa
         global phoneme
 
@@ -104,34 +105,34 @@ class Translator:
         return out
 
     # Takes Shavian text, returns SSML
-    def make_ssml(self, text):
+    def make_ssml(self, text: str) -> str:
         global ssml_open
         global ssml_close
 
-        out = [ssml_open]
-        word = []
+        out = ssml_open
+        word = ''
 
         # Read char-by-char
         # Add to word buffer if Shavian
         # Wrap buffer then pass through when not Shavian
         for char in text:
             if char in shavipa:
-                word.append(char)
+                word += char
             else:
                 if word:
-                    out.append(self.wrap(word))
-                    word.clear()
-                out.append(char)
+                    out += self.wrap(word)
+                    word = ''
+                out += char
 
         # Ensure final buffer is processed
         if word:
-            out.append(self.wrap(word))
-        out.append(ssml_close)
+            out += self.wrap(word)
+        out += ssml_close
 
         return ''.join(out).strip()
 
     # Write SSML to file (if initially read from file)
-    def write_output(self, out):
+    def write_output(self, out: str) -> str:
         if not self.out_file:
             return ''
         with open(self.out_file, 'w', encoding='utf-8') as file:

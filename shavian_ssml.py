@@ -35,8 +35,6 @@ ipa_traditional: dict[str, str] = {
     '𐑻': 'ɜːr', '𐑼': 'ər', '𐑽': 'ɪər',
     '𐑾': 'ɪə', '𐑿': 'juː'
 }
-# Select your preferred IPA set here
-shavipa: dict[str, str] = ipa_traditional
 
 
 def main() -> None:

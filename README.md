@@ -49,7 +49,7 @@ That Shavian text is converted to the following SSML using either Modern IPA or 
 </speak>
 ```
 
-## Listen to Result
+## Listen
 
 - Go to [speech.microsoft.com/audiocontentcreation](https://speech.microsoft.com/audiocontentcreation)
 - Enable SSML input with the switch

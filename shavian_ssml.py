@@ -5,12 +5,7 @@ import sys
 import argparse
 
 
-# Global variables here at the top to keep them easy to see and change.
-# The xml/ssml below is for Microsoft TTS since that is freely accessible
-# by web browser and requires no other software be installed.
-ssml_open: str = '<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US">\n  <voice name="en-US-JennyNeural">\n'
-phoneme: str = '<phoneme alphabet="ipa" ph="THEIPA">THESHA</phoneme>'
-ssml_close: str = '\n  </voice>\n</speak>\n'
+# Shavian IPA equivalency tables
 ipa_modern: dict[str, str] = {
     '𐑐': 'p', '𐑚': 'b', '𐑑': 't', '𐑛': 'd', '𐑒': 'k', '𐑜': 'g',
     '𐑓': 'f', '𐑝': 'v', '𐑔': 'θ', '𐑞': 'ð', '𐑕': 's', '𐑟': 'z',
@@ -38,7 +33,7 @@ ipa_traditional: dict[str, str] = {
 
 
 def main() -> None:
-    args: argparse.Namespace = get_arguments()
+    args: argparse.Namespace = arguments()
     translator = Translator(args)
 
     # Read file if provided
@@ -47,9 +42,9 @@ def main() -> None:
         text = translator.read_text(args.input_file)
     # Demo if no file
     else:
-        desc = 'Demo'
+        desc = 'Universal Declaration of Human Rights'
         text = '𐑭𐑤 𐑣𐑿𐑥𐑩𐑯 𐑚𐑰𐑦𐑙𐑟 𐑸 𐑚𐑹𐑯 𐑓𐑮𐑰 𐑯 𐑰𐑒𐑢𐑩𐑤 𐑦𐑯 𐑛𐑦𐑜𐑯𐑩𐑑𐑰 𐑯 𐑮𐑲𐑑𐑕. '
-        text += '𐑞𐑱 𐑸 𐑧𐑯𐑛𐑬𐑛 𐑢𐑦𐑞 𐑮𐑰𐑟𐑩𐑯 𐑯 𐑒𐑭𐑯𐑖𐑩𐑯𐑕 𐑯 𐑖𐑫𐑛 𐑨𐑒𐑑 𐑑𐑹𐑛𐑟 𐑢𐑩𐑯 '
+        text += '𐑞𐑱 𐑸 𐑧𐑯𐑛𐑬𐑛 𐑢𐑦𐑞 𐑮𐑰𐑟𐑩𐑯 𐑯 𐑒𐑪𐑯𐑖𐑩𐑯𐑕 𐑯 𐑖𐑫𐑛 𐑨𐑒𐑑 𐑑𐑹𐑛𐑟 𐑢𐑳𐑯 '
         text += '𐑩𐑯𐑳𐑞𐑼 𐑦𐑯 𐑩 𐑕𐑐𐑦𐑮𐑦𐑑 𐑝 𐑚𐑮𐑳𐑞𐑼𐑣𐑫𐑛.'
 
     # Create SSML
@@ -62,13 +57,15 @@ def main() -> None:
     print('https://speech.microsoft.com/audiocontentcreation')
 
 
-def get_arguments() -> None:
+def arguments() -> None:
     parser = argparse.ArgumentParser(
         description='Convert Shavian text to SSML with IPA for TTS engines')
     # parser.add_argument('--ipa', choices=['modern', 'traditional'],
         # default='traditional', help='Select IPA style')
-    parser.add_argument('-m', '--modern', action='store_true', 
+    parser.add_argument('-m', '--modern', action='store_true',
         help='Use modern IPA style (default is traditional)')
+    parser.add_argument('-r', '--region', choices=['us', 'gb'],
+        default='gb', help='Select TTS region (us or gb)')
     parser.add_argument('input_file', nargs='?',
         help='Input file containing Shavian text')
     return parser.parse_args()
@@ -80,12 +77,29 @@ class Translator:
         self.out_file: str = ''
         self.shavipa: dict[str, str] = {}
 
+        # Select IPA type
         if args.modern:
             global ipa_modern
             self.shavipa = ipa_modern
         else:
             global ipa_traditional
             self.shavipa = ipa_traditional
+
+        # Select region and voice
+        if args.region == 'us':
+            lang = 'en-US'
+            voice = 'en-US-JennyNeutral'
+        else:  # Default to 'gb'
+            lang = 'en-GB'
+            voice = 'en-GB-SoniaNeural'
+        self.ssml_open = '<speak xmlns="http://www.w3.org/2001/10/synthesis" '
+        self.ssml_open += 'xmlns:mstts="http://www.w3.org/2001/mstts" '
+        self.ssml_open += 'xmlns:emo="http://www.w3.org/2009/10/emotionml" '
+        self.ssml_open += f'version="1.0" xml:lang="{lang}">\n'
+        self.ssml_open += f'  <voice name="{voice}">\n'
+        self.ssml_close: str = '\n  </voice>\n</speak>\n'
+        self.phoneme: str = '<phoneme alphabet="ipa" ph="THEIPA">'
+        self.phoneme += 'THESHA</phoneme>'
 
     # Read Shavian text from file supplied as command parameter
     def read_text(self, in_file: str) -> str:
@@ -100,7 +114,6 @@ class Translator:
 
     # Wrap word in phoneme tag
     def wrap(self, word: str) -> str:
-        global phoneme
         sha = ''.join(word)
         ipa = ''.join([self.shavipa[c] for c in sha])
 
@@ -121,15 +134,12 @@ class Translator:
                 break
 
         # Insert into phoneme tag
-        out = phoneme.replace('THEIPA', ipa).replace('THESHA', sha)
+        out = self.phoneme.replace('THEIPA', ipa).replace('THESHA', sha)
         return out
 
     # Takes Shavian text, returns SSML
     def make_ssml(self, text: str) -> str:
-        global ssml_open
-        global ssml_close
-
-        out = ssml_open
+        out = self.ssml_open
         word = ''
 
         # Read char-by-char
@@ -147,7 +157,7 @@ class Translator:
         # Ensure final buffer is processed
         if word:
             out += self.wrap(word)
-        out += ssml_close
+        out += self.ssml_close
 
         return ''.join(out).strip()
 
@@ -160,6 +170,6 @@ class Translator:
         return f'\nSSML saved to {self.out_file}'
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
 

@@ -8,8 +8,10 @@ positional arguments:
   input_file    Input file containing Shavian text
 
 options:
-  -h, --help    show this help message and exit
-  -m, --modern  Use modern IPA style (default is traditional)
+  -h, --help            show this help message and exit
+  -m, --modern          Use modern IPA style (default is traditional)
+  -r {us,gb}, --region {us,gb} 
+                        Select TTS region (us or gb) (default is gb)
 ```
 
 Created at the suggestion of u/ProvincialPromenade
